@@ -2,173 +2,171 @@ const inquirer = require('inquirer');
 const db = require('./db');
 
 
+
 const employeeQuestions = () => {
-    inquirer.prompt ([
+    inquirer.prompt([
         {
             type: 'list',
             name: 'choices',
             message: 'What would you like to do?',
             choices: [
                 'View all employees',
-                'View all employees by department',
-                'View all employees by manager',
+                'View all departments',
+                'View all roles',
                 'Add employee',
-                'Remove employee',
-                'Update employee role',
-                'Update employee manager'
+                'Add department',
+                'Add role',
+                'Update employee role'
             ]
         }
     ])
-    .then((data) => {
-        const question = data;
-
-        if (question === 'View all employees') {
-            viewAllEmployees();
-        }
-        else if (question === 'View all employees by department') {
-            viewEmployeesByDepartment();
-        }
-        else if (question === 'View all employees by manager') {
-            viewEmployeesByManager();
-        }
-        else if (question === 'Add employee') {
-            addEmployee();
-        }
-        else if (question === 'Remove employee') {
-            removeEmployee();
-        }
-        else if (question === 'Update employee role') {
-            updateEmployeeRole();
-        }
-        else if (question === 'Update employee manager') {
-            updateEmployeeManager();
-        }
-    });
+        .then((data) => {
+            const question = data.choices;
+            if (question === 'View all employees') {
+                viewAllEmployees();
+            }
+            else if (question === 'View all departments') {
+                viewAllDepartments();
+            }
+            else if (question === 'View all roles') {
+                viewAllRoles();
+            }
+            else if (question === 'Add employee') {
+                addEmployee();
+            }
+            else if (question === 'Add deparment') {
+                addDepartment();
+            }
+            else if (question === 'Add role') {
+                addRole();
+            }
+            else if (question === 'Update employee role') {
+                updateEmployeeRole();
+            }
+        });
 };
 
 employeeQuestions();
 
 
-
 const viewAllEmployees = () => {
-    db.viewAllEmployees()
-    .then(
-         //console.table the results?
-    )
-    .then(
-        employeeQuestions()
-    )};
-
-// OR ??
-
-// const viewAllEmployees = () => {
-//     let sql =         
-//     `SELECT employee.first_name,
-//     employee.last_name,
-//     role.title,
-//     department.name AS 'department'
-//     `;
-//     connection.promise().query(sql, (err, response) => {
-//         if (err) throw error;
-//         console.table(response);
-//     })
-//     .then(
-//         employeeQuestions()
-//     )};
-
-
-
-
-
-const viewEmployeesByDepartment = () => {
-    // inquirer.prompt([
-    //     {
-    //         type: 'list',
-    //         name: 'department',
-    //         message: "Which department's employees would you like to view?",
-    //         choices: ['Human Resources', 'IT', 'Legal', 'Design', 'Sales', 'Finance']
-    //     }
-    // ])
-    // .then((data) => {
-    //     const department = data;
-    //     if (department === 'Human Resources') {
-    //         // query to display all HR employees
-    //     }
-    //     else if (department === 'IT') {
-    //         // query to display all IT employees
-    //     }
-    //     else if (department === 'Legal') {
-    //         // query to display all legal employees
-    //     }
-    //     else if (department === 'Design') {
-    //         // query to display all design employees
-    //     }
-    //     else if (department === 'Sales') {
-    //         // query to display all sales employees
-    //     }
-    //     else if (departent === 'Finance') {
-    //         // query to display all finance employees
-    //     }
-    // })
-    
-    db.viewEmployeesByDepartment()
-    .then(
-        // console.table the results
-    )
-    .then(
-        employeeQuestions()
-    )};
-
-
-const viewEmployeesByManager = () => {
-    db.viewEmployeesByManager()
-    .then(
-        // console.table the results
-    )
+    db.viewAllEmployeesQuery()
+        .then((response) => {
+            console.table(response[0])
+        })
+        .then(() => {
+            employeeQuestions()
+        })
 };
 
+
+const viewAllDepartments = () => {
+    db.viewAllDepartmetsQuery()
+        .then((response) => {
+            console.table(response[0])
+        })
+        .then(() => {
+            employeeQuestions()
+        })
+};
+
+
+const viewAllRoles = () => {
+    db.viewAllRolesQuery()
+        .then((response) => {
+            console.table(response[0])
+        })
+        .then(() => {
+            employeeQuestions()
+        })
+};
 
 
 const addEmployee = () => {
     inquirer.prompt([
         {
-           type: 'input',
-           name: 'firstName',
-           message: "What is the employee's first name?",
-           validate: firstNameInput => {
-               if(firstNameInput) {
-                   return true;
-               } else {
-                   console.log('First name required');
-                   return false;
-               }
-           }
+            type: 'input',
+            name: 'first_name',
+            message: "What is the employee's first name?",
+            validate: firstNameInput => {
+                if (firstNameInput) {
+                    return true;
+                } else {
+                    console.log('First name required');
+                    return false;
+                }
+            }
         },
         {
             type: 'input',
-            name: 'lastName',
+            name: 'last_name',
             message: "What is the employee's last name",
             validate: lastNameInput => {
-                if(lastNameInput) {
+                if (lastNameInput) {
                     return true;
                 } else {
                     console.log('Last name required');
                     return false;
                 }
             }
-        },
+        }
     ])
 
-    // add first and last name to employee table?
-    .then(data => {
-        const newEmployee = `INSERT INTO employee (firstName, lastName)`;
-    })
+        .then((response) => {
+            let firstName = response.first_name;
+            let lastName = response.last_name;
+            db.viewAllRolesQuery()
+                .then(([rows]) => {
+                    let roles = rows;
+                    const roleChoices = roles.map(({ id, title }) => ({
+                        name: title,
+                        value: id
+                        })
+                    );
+
+                    inquirer.prompt([
+                        {
+                            type: 'list',
+                            name: 'role_id',
+                            message: "What is the employee's role?",
+                            choices: roleChoices
+                        },
+                        {
+                            type: 'list',
+                            name: 'manager_id',
+                            message: "Who is this employee's manager?",
+                            choices: ['1', '2', '3']   //managerChoices this will eventually bring in all the managers to choose from
+                        }
+                    ])
+
+                        .then((data) => {
+                            let roleId = data.role_id;
+
+                            // db.query to find the managers in the employee table
+                            // another .then here to ask the manager question 
 
 
-    // add department to department table?
-
-    // add role/title and salary to role table?
+                            let managerId = data.manager_id;
+                            console.log(data);
+                            let employee = {
+                                first_name: firstName,
+                                last_name: lastName,
+                                role_id: roleId,
+                                manager_id: managerId
+                            }
+                            db.addEmployeeQuery(employee)
+                                .then((response) => {
+                                    console.table(response)
+                                })
+                                .then(() => {
+                                    console.log("employee added successfully!")
+                                    employeeQuestions()
+                                });
+                        });
+                })
+        })
 }
+
 
 
 
